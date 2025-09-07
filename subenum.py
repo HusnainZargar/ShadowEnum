@@ -3,6 +3,7 @@
 async_subenum.py
 Subdomain Bruteforce using Async DNS (Cloudflare)
 Filters duplicates based on IP set (default) unless -df is passed
+Also ensures subdomains are unique across wordlist + API results.
 """
 
 import asyncio
@@ -87,7 +88,7 @@ async def resolve_subdomain(resolver, subdomain):
         return None, None
 
 # ===== Modified brute-force with filtering toggle =====
-async def brute_force_subdomains(domain, wordlist_path, filter_ip=True, concurrency=200):
+async def brute_force_subdomains(domain, wordlist_path, seen_subdomains, filter_ip=True, concurrency=200):
     """Run subdomain brute-force using async DNS resolution."""
     resolver = aiodns.DNSResolver()
     resolver.nameservers = ['1.1.1.1', '1.0.0.1']  # Cloudflare DNS
@@ -110,6 +111,12 @@ async def brute_force_subdomains(domain, wordlist_path, filter_ip=True, concurre
         async with sem:
             sub, ips = await resolve_subdomain(resolver, sub)
             if sub and ips:
+                # 🔑 Global filter by subdomain name
+                if sub in seen_subdomains:
+                    return
+                seen_subdomains.add(sub)
+
+                # Existing IP filtering
                 key = tuple(ips) if filter_ip else sub
                 if key not in seen_items:
                     seen_items.add(key)
@@ -193,18 +200,24 @@ async def fetch_api_subdomains(domain):
     return sorted(s for s in api_results if s and s.endswith(domain))
 
 # ===== Resolve API subdomains =====
-async def resolve_api_subdomains(subdomains, filter_ip=True, concurrency=200):
+async def resolve_api_subdomains(subdomains, seen_subdomains, filter_ip=True, concurrency=200):
     resolver = aiodns.DNSResolver()
     resolver.nameservers = ['1.1.1.1', '1.0.0.1']
 
     live_subdomains = []
-    seen = set()   # 🔑 fresh set here, so API results don't filter against brute-force
+    seen = set()   # still used for IP-based deduplication
     sem = asyncio.Semaphore(concurrency)
 
     async def worker(sub):
         async with sem:
             sub_resolved, ips = await resolve_subdomain(resolver, sub)
             if sub_resolved and ips:
+                # 🔑 Global filter by subdomain name
+                if sub_resolved in seen_subdomains:
+                    return
+                seen_subdomains.add(sub_resolved)
+
+                # Existing IP filtering
                 key = tuple(ips) if filter_ip else sub_resolved
                 if key not in seen:
                     seen.add(key)
@@ -230,6 +243,7 @@ async def main():
     args = parser.parse_args()
 
     filter_ip = not args.dont_filter_ip
+    seen_subdomains = set()  # 🔑 Global subdomain-name filter
 
     start_time = time.time()
     print(f"{YELLOW}[+] Starting async subdomain enumeration for {args.domain}{RESET}")
@@ -238,14 +252,14 @@ async def main():
     live_subs_total = []
 
     if args.wordlist:
-        live_subs = await brute_force_subdomains(args.domain, Path(args.wordlist), filter_ip=filter_ip)
+        live_subs = await brute_force_subdomains(args.domain, Path(args.wordlist), seen_subdomains, filter_ip=filter_ip)
         live_subs_total.extend(live_subs)
 
     if args.api:
         print(f"{YELLOW}[+] Fetching subdomains from APIs...{RESET}")
         api_subs = await fetch_api_subdomains(args.domain)
         print(f"{YELLOW}[+] Resolving API subdomains...{RESET}")
-        live_api = await resolve_api_subdomains(api_subs, filter_ip=filter_ip)
+        live_api = await resolve_api_subdomains(api_subs, seen_subdomains, filter_ip=filter_ip)
         live_subs_total.extend(live_api)
 
     elapsed = time.time() - start_time
