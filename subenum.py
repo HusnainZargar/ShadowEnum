@@ -3,6 +3,7 @@
 subenum.py
 Subdomain Bruteforce using Async DNS (Cloudflare)
 Filters duplicates based on IP set
+V1.0.0
 """
 
 import asyncio
