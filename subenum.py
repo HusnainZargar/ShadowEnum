@@ -8,13 +8,12 @@ Filters duplicates based on IP set (default) unless -df is passed
 import asyncio
 import aiodns
 import time
-import sys
 from pathlib import Path
-
-# ===== NEW IMPORTS =====
 import argparse
 import aiohttp
 import os
+import json
+import ipaddress
 from dotenv import load_dotenv
 
 # ANSI colors
@@ -33,6 +32,49 @@ if not ENV_PATH.exists():
     print(f"{YELLOW}[+] Created {ENV_PATH} with placeholder API keys{RESET}")
 
 load_dotenv(ENV_PATH)
+
+# ===== Helper: check if IP is public or private =====
+def ip_type(ip: str) -> str:
+    try:
+        ip_obj = ipaddress.ip_address(ip)
+        return "Private" if ip_obj.is_private else "Public"
+    except ValueError:
+        return "Unknown"
+
+# ===== Output saving =====
+def save_results(domain, live_subdomains, elapsed, txt_file=None, json_file=None):
+    if txt_file:
+        # ---- TXT Format ----
+        txt_lines = []
+        for sub, ips in live_subdomains:
+            txt_lines.append(f"[LIVE] {sub}")
+            for ip in ips:
+                txt_lines.append(f"    IP: {ip} ({ip_type(ip)})")
+            txt_lines.append("")  # spacing
+        txt_lines.append(f"Total unique live subdomains: {len(live_subdomains)}")
+        txt_lines.append(f"Scan completed in {elapsed:.2f} seconds")
+
+        with open(txt_file, "w") as f:
+            f.write("\n".join(txt_lines))
+        print(f"{YELLOW}[+] TXT results saved to {txt_file}{RESET}")
+
+    if json_file:
+        # ---- JSON Format ----
+        results_json = {
+            "domain": domain,
+            "total_live_subdomains": len(live_subdomains),
+            "scan_time_seconds": round(elapsed, 2),
+            "results": []
+        }
+        for sub, ips in live_subdomains:
+            results_json["results"].append({
+                "subdomain": sub,
+                "ips": [{"ip": ip, "type": ip_type(ip)} for ip in ips]
+            })
+
+        with open(json_file, "w") as f:
+            json.dump(results_json, f, indent=4)
+        print(f"{YELLOW}[+] JSON results saved to {json_file}{RESET}")
 
 # ===== Original function =====
 async def resolve_subdomain(resolver, subdomain):
@@ -151,12 +193,12 @@ async def fetch_api_subdomains(domain):
     return sorted(s for s in api_results if s and s.endswith(domain))
 
 # ===== Resolve API subdomains =====
-async def resolve_api_subdomains(subdomains, seen_items=None, filter_ip=True, concurrency=200):
+async def resolve_api_subdomains(subdomains, filter_ip=True, concurrency=200):
     resolver = aiodns.DNSResolver()
     resolver.nameservers = ['1.1.1.1', '1.0.0.1']
 
     live_subdomains = []
-    seen = seen_items if seen_items is not None else set()
+    seen = set()   # 🔑 fresh set here, so API results don't filter against brute-force
     sem = asyncio.Semaphore(concurrency)
 
     async def worker(sub):
@@ -183,6 +225,8 @@ async def main():
     parser.add_argument("-w", "--wordlist", help="Path to subdomain wordlist")
     parser.add_argument("--api", action="store_true", help="Use API-based enumeration")
     parser.add_argument("-df", "--dont-filter-ip", action="store_true", help="Do not filter by IP set (keep all subdomains)")
+    parser.add_argument("-oT", "--output-txt", help="Save results in TXT format to given file")
+    parser.add_argument("-oJ", "--output-json", help="Save results in JSON format to given file")
     args = parser.parse_args()
 
     filter_ip = not args.dont_filter_ip
@@ -192,24 +236,24 @@ async def main():
     print(f"{YELLOW}[i] Filtering by IP is {'ON' if filter_ip else 'OFF'}{RESET}")
 
     live_subs_total = []
-    shared_seen_items = set()
 
     if args.wordlist:
         live_subs = await brute_force_subdomains(args.domain, Path(args.wordlist), filter_ip=filter_ip)
         live_subs_total.extend(live_subs)
-        for sub, ips in live_subs:
-            key = tuple(ips) if filter_ip else sub
-            shared_seen_items.add(key)
 
     if args.api:
         print(f"{YELLOW}[+] Fetching subdomains from APIs...{RESET}")
         api_subs = await fetch_api_subdomains(args.domain)
         print(f"{YELLOW}[+] Resolving API subdomains...{RESET}")
-        live_api = await resolve_api_subdomains(api_subs, seen_items=shared_seen_items, filter_ip=filter_ip)
+        live_api = await resolve_api_subdomains(api_subs, filter_ip=filter_ip)
         live_subs_total.extend(live_api)
 
     elapsed = time.time() - start_time
     print(f"\n{GREEN}[+] Found {len(live_subs_total)} unique live subdomains in {elapsed:.2f} seconds{RESET}")
+
+    # ===== Save results only if flags provided =====
+    if args.output_txt or args.output_json:
+        save_results(args.domain, live_subs_total, elapsed, txt_file=args.output_txt, json_file=args.output_json)
 
 if __name__ == "__main__":
     try:
