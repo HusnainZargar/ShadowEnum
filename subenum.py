@@ -15,7 +15,6 @@ import os
 import json
 import ipaddress
 from dotenv import load_dotenv
-from shodan import Shodan, APIError
 
 # ===== Colors =====
 GREEN = "\033[92m"
@@ -35,6 +34,12 @@ if not ENV_PATH.exists():
 
 load_dotenv(ENV_PATH)
 
+# ===== Load API Keys =====
+VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "").strip()
+SECURITYTRAILS_API_KEY = os.getenv("SECURITYTRAILS_API_KEY", "").strip()
+ALIENVAULT_API_KEY = os.getenv("ALIENVAULT_API_KEY", "").strip()
+SHODAN_API_KEY = os.getenv("SHODAN_API_KEY", "").strip()
+
 # ===== Helper: Public/Private IP check =====
 def ip_type(ip: str) -> str:
     try:
@@ -44,13 +49,15 @@ def ip_type(ip: str) -> str:
         return "Unknown"
 
 # ===== Save results =====
-def save_results(domain, live_subdomains, elapsed, txt_file=None, json_file=None):
+def save_results(domain, live_subdomains, elapsed, shodan_results=None, txt_file=None, json_file=None):
     if txt_file:
         lines = []
         for sub, ips in live_subdomains:
             lines.append(f"[LIVE] {sub}")
             for ip in ips:
                 lines.append(f"    IP: {ip} ({ip_type(ip)})")
+                if shodan_results and ip in shodan_results:
+                    lines.append(f"        Shodan: {json.dumps(shodan_results[ip], indent=4)}")
             lines.append("")
         lines.append(f"Total unique live subdomains: {len(live_subdomains)}")
         lines.append(f"Scan completed in {elapsed:.2f} seconds")
@@ -63,7 +70,17 @@ def save_results(domain, live_subdomains, elapsed, txt_file=None, json_file=None
             "total_live_subdomains": len(live_subdomains),
             "scan_time_seconds": round(elapsed, 2),
             "results": [
-                {"subdomain": sub, "ips": [{"ip": ip, "type": ip_type(ip)} for ip in ips]}
+                {
+                    "subdomain": sub,
+                    "ips": [
+                        {
+                            "ip": ip,
+                            "type": ip_type(ip),
+                            "shodan": shodan_results.get(ip) if shodan_results else None
+                        }
+                        for ip in ips
+                    ]
+                }
                 for sub, ips in live_subdomains
             ]
         }
@@ -111,10 +128,9 @@ async def fetch_api_subdomains(domain):
     api_results = set()
     async with aiohttp.ClientSession() as session:
         # VirusTotal
-        vt_key = os.getenv("VIRUSTOTAL_API_KEY", "").strip()
-        if vt_key:
+        if VIRUSTOTAL_API_KEY:
             url = f"https://www.virustotal.com/api/v3/domains/{domain}/subdomains"
-            headers = {"x-apikey": vt_key}
+            headers = {"x-apikey": VIRUSTOTAL_API_KEY}
             try:
                 while url:
                     async with session.get(url, headers=headers) as r:
@@ -129,12 +145,11 @@ async def fetch_api_subdomains(domain):
                 print(f"{RED}[-] VT API error: {e}{RESET}")
 
         # SecurityTrails
-        st_key = os.getenv("SECURITYTRAILS_API_KEY", "").strip()
-        if st_key:
+        if SECURITYTRAILS_API_KEY:
             try:
                 async with session.get(
                     f"https://api.securitytrails.com/v1/domain/{domain}/subdomains",
-                    headers={"APIKEY": st_key}
+                    headers={"APIKEY": SECURITYTRAILS_API_KEY}
                 ) as r:
                     if r.status == 200:
                         data = await r.json()
@@ -145,12 +160,11 @@ async def fetch_api_subdomains(domain):
                 print(f"{RED}[-] ST API error: {e}{RESET}")
 
         # AlienVault OTX
-        av_key = os.getenv("ALIENVAULT_API_KEY", "").strip()
-        if av_key:
+        if ALIENVAULT_API_KEY:
             try:
                 async with session.get(
                     f"https://otx.alienvault.com/api/v1/indicators/domain/{domain}/passive_dns",
-                    headers={"X-OTX-API-KEY": av_key}
+                    headers={"X-OTX-API-KEY": ALIENVAULT_API_KEY}
                 ) as r:
                     if r.status == 200:
                         data = await r.json()
@@ -185,74 +199,44 @@ async def resolve_api_subdomains(subdomains, seen_subdomains, filter_ip=True, co
         await asyncio.gather(*(worker(sub) for sub in subdomains))
     return live_subdomains
 
-
-async def _shodan_lookup(ip, api):
-    loop = asyncio.get_event_loop()
-    try:
-        data = await loop.run_in_executor(None, api.host, ip)
-        if isinstance(data, dict) and "error" in data:
-            if any(msg in data["error"] for msg in ["403", "Access denied", "No information available"]):
-                return None
-        return ip, {
-            "ip": data.get("ip_str"),
+# ===== Clean Shodan Data =====
+def format_shodan_data(raw_data):
+    formatted = {}
+    for ip, data in raw_data.items():
+        if not data:
+            continue
+        formatted[ip] = {
+            "country": data.get("country_name"),
             "org": data.get("org"),
-            "os": data.get("os"),
-            "ports": data.get("ports"),
-            "vulns": list(data.get("vulns", {}).keys()) if data.get("vulns") else []
+            "asn": data.get("asn"),
+            "region": data.get("region_code"),
+            "tags": data.get("tags", []),
+            "open_ports": sorted(data.get("ports", [])) if "ports" in data else []
         }
-    except APIError as e:
-        if any(msg in str(e) for msg in ["403", "Access denied", "No information available"]):
-            return None
-        return None
+    return formatted
 
 # ===== Shodan Async =====
-async def fetch_shodan_data(ip, api, rate_limit, fast_mode=False):
-    async with rate_limit:
-        if not fast_mode:
-            await asyncio.sleep(1)  # Safe mode delay
-        loop = asyncio.get_event_loop()
+async def query_shodan_async(ip_list, shodan_api_key, fast_mode=False):
+    if not shodan_api_key:
+        print(f"{RED}[!] No Shodan API key provided. Skipping Shodan lookups.{RESET}")
+        return {}
+
+    async def fetch_shodan(ip):
         try:
-            data = await loop.run_in_executor(None, api.host, ip)
+            url = f"https://api.shodan.io/shodan/host/{ip}?key={shodan_api_key}"
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        return (ip, data)
+        except Exception as e:
+            print(f"[!] Shodan lookup failed for {ip}: {e}")
+        return None
 
-            # Skip results with errors
-            if isinstance(data, dict) and "error" in data:
-                if any(msg in data["error"] for msg in ["403", "Access denied", "No information available"]):
-                    return None
-
-            return ip, {
-                "ip": data.get("ip_str"),
-                "org": data.get("org"),
-                "os": data.get("os"),
-                "ports": data.get("ports"),
-                "vulns": list(data.get("vulns", {}).keys()) if data.get("vulns") else []
-            }
-
-        except APIError as e:
-            if any(msg in str(e) for msg in ["403", "Access denied", "No information available"]):
-                return None
-            return None
-
-async def query_shodan_async(ip_list, domain, fast_mode=False):
-    if not ip_list:
-        print(f"{YELLOW}[+] No public IPs found — skipping Shodan query.{RESET}")
-        return
-    shodan_key = os.getenv("SHODAN_API_KEY", "").strip()
-    if not shodan_key:
-        print(f"{RED}[-] Shodan API key not set — skipping Shodan query.{RESET}")
-        return
-
-    api = Shodan(shodan_key)
-    rate_limit = asyncio.Semaphore(1)  # Limit concurrency
-    print(f"{YELLOW}[+] Querying Shodan for {len(ip_list)} IP(s)...{RESET}")
-
-    # Run all requests
-    results = await asyncio.gather(*(fetch_shodan_data(ip, api, rate_limit, fast_mode) for ip in ip_list))
-
-    # Remove None values before saving
-    cleaned_results = {ip: data for item in results if item for ip, data in [item]}
-
-    Path(f"{domain}_shodan.json").write_text(json.dumps(cleaned_results, indent=4))
-    print(f"{YELLOW}[+] Shodan results saved to {domain}_shodan.json{RESET}")
+    tasks = [fetch_shodan(ip) for ip in ip_list]
+    results = await asyncio.gather(*tasks)
+    shodan_data = {ip: data for r in results if r is not None for ip, data in [r]}
+    return format_shodan_data(shodan_data)
 
 # ===== Main =====
 async def main():
@@ -289,12 +273,13 @@ async def main():
     elapsed = time.time() - start_time
     print(f"\n{GREEN}[+] Found {len(live_subs_total)} unique live subdomains in {elapsed:.2f} seconds{RESET}")
 
-    if args.output_txt or args.output_json:
-        save_results(args.domain, live_subs_total, elapsed, txt_file=args.output_txt, json_file=args.output_json)
-
+    shodan_results = {}
     if args.shodan:
         public_ips = sorted({ip for _, ips in live_subs_total for ip in ips if ip_type(ip) == "Public"})
-        await query_shodan_async(public_ips, args.domain, fast_mode=args.fast)
+        shodan_results = await query_shodan_async(public_ips, SHODAN_API_KEY, fast_mode=args.fast)
+
+    if args.output_txt or args.output_json:
+        save_results(args.domain, live_subs_total, elapsed, shodan_results, txt_file=args.output_txt, json_file=args.output_json)
 
 if __name__ == "__main__":
     try:
