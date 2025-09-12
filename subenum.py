@@ -36,19 +36,13 @@ MAGENTA = "\033[35m"
 CYAN    = "\033[36m"
 WHITE   = "\033[37m"
 RESET   = "\033[0m"
-BRIGHT_RED     = "\033[91m"
-BRIGHT_GREEN   = "\033[92m"
-BRIGHT_YELLOW  = "\033[93m"
 BRIGHT_BLUE    = "\033[94m"
-BRIGHT_MAGENTA = "\033[95m"
-BRIGHT_CYAN    = "\033[96m"
-BRIGHT_WHITE   = "\033[97m"
 # ===== Banner =====
 import shutil
 import itertools
 import random
 
-COLORS = [RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, BRIGHT_RED, BRIGHT_GREEN, BRIGHT_YELLOW, BRIGHT_BLUE]
+COLORS = [RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, BRIGHT_BLUE]
 SUB_COLOR=[RED,GREEN,BLUE,YELLOW]
 
 def print_centered(text, color=""):
