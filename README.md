@@ -77,7 +77,7 @@ sudo chmod +x install.sh
 
 # Run Install.sh
 ./install.sh
-
+```
 ---
 
 🛡 **Ethical Reminder**  
