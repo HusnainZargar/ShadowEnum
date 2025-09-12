@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 async_subenum.py
@@ -36,14 +35,14 @@ MAGENTA = "\033[35m"
 CYAN    = "\033[36m"
 WHITE   = "\033[37m"
 RESET   = "\033[0m"
-BRIGHT_BLUE    = "\033[94m"
+BRIGHT_GREEN   = "\033[92m"
+BRIGHT_YELLOW  = "\033[93m"
+BRIGHT_MAGENTA = "\033[95m"
+BRIGHT_CYAN    = "\033[96m"
 # ===== Banner =====
 import shutil
 import itertools
 import random
-
-COLORS = [RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, BRIGHT_BLUE]
-SUB_COLOR=[RED,GREEN,BLUE,YELLOW]
 
 def print_centered(text, color=""):
     width = shutil.get_terminal_size((80, 20)).columns  # fallback 80 cols
@@ -51,13 +50,14 @@ def print_centered(text, color=""):
         print(color + line.center(width) + RESET)
 
 def print_banner():
-    subtitle = ">>> Black Byt3 Cyber Hunters <<<"
+    subtitle = ">>> By Team Cyber Hunters <<<"
     contact = "LinkedIn: Black Byt3 | Email: blackbyt3.info@gmail.com"
-    color = BRIGHT_BLUE
-    sub_color=random.choice(SUB_COLOR)
-    print_centered(BANNER_ART, color)
-    print_centered(subtitle,sub_color)
-    print_centered(contact)
+    team = "Team Members: Mushaib Ahmed | Muhammad Husnain | Muhammad Aeiyan | Fawad Qureshi"
+# Fixed colors (no randomness)
+    print_centered(BANNER_ART, BRIGHT_GREEN)    # Main banner
+    print_centered(subtitle, BRIGHT_YELLOW)     # Subtitle
+    print_centered(contact, BRIGHT_MAGENTA)     # Contact info
+    print_centered(team, BRIGHT_CYAN)           # Team members
     print()
 print_banner()
 
