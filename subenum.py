@@ -53,7 +53,7 @@ def print_centered(text, color=""):
 def print_banner():
     subtitle = ">>> Black Byt3 Cyber Hunters <<<"
     contact = "LinkedIn: Black Byt3 | Email: blackbyt3.info@gmail.com"
-    color = random.choice(COLORS)   # pick a random color
+    color = BRIGHT_BLUE
     sub_color=random.choice(SUB_COLOR)
     print_centered(BANNER_ART, color)
     print_centered(subtitle,sub_color)
