@@ -69,8 +69,8 @@ When enabled (`--shodan`) shadowEnum will query Shodan for public IPs and includ
 ## 📦 Installation
 ```bash
 # Clone the repo
-git clone git@github.com:Cybertoonv/Sub_Domain_ENUM.git
-cd Sub_Domain_ENUM
+git clone git@github.com:Cybertoonv/ShadowEnum.git
+cd ShadowEnum
 
 # Install dependencies
 sudo chmod +x install.sh
