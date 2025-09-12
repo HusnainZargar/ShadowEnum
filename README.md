@@ -64,5 +64,21 @@ When enabled (`--shodan`) shadowEnum will query Shodan for public IPs and includ
 - `-oJ, --output-json` — save JSON report  
 - `-oH, --output-html` — save HTML report
 
+---
+
+## 📦 Installation
+```bash
+# Clone the repo
+git clone git@github.com:Cybertoonv/Sub_Domain_ENUM.git
+cd Sub_Domain_ENUM
+
+# Install dependencies
+sudo chmod +x install.sh
+
+# Run Install.sh
+./install.sh
+
+---
+
 🛡 **Ethical Reminder**  
 Only run shadowEnum against domains you own or have explicit permission to test. Unauthorized scanning may be illegal.
