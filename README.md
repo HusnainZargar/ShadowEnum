@@ -36,7 +36,13 @@ Ensures unique subdomain names across both wordlist and API results (prevents du
 💾 **Customizable Output**  
 - Save results in **TXT** format (`-oT`)  
 - Save results in **JSON** format (`-oJ`)  
-Includes subdomain → IP mapping and scan metadata (timestamps, counts, and optional Shodan enrichment).
+- Save results in **HTML** format (`-oH`)  
+
+Each format includes:  
+- Subdomain → IP mapping  
+- IP classification (Public/Private)  
+- Metadata (timestamps, total counts, duration)  
+- Optional **Shodan enrichment** (open ports, CVEs, server info)
 
 🔑 **Environment File Auto-Creation**  
 Automatically creates `~/.env` with placeholders for API keys if missing.  
