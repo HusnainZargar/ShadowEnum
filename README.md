@@ -1,5 +1,7 @@
 # 🕶️ shadowEnum — Asynchronous Subdomain Enumeration & Recon Tool  
-
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/status-Active-success)
 > *Uncover the unseen. Map the shadows.*  
 
 ShadowEnum is a **fast & async** subdomain enumeration + recon tool ⚡. It blends **brute-force DNS resolution** with **OSINT APIs** (VirusTotal, SecurityTrails, AlienVault OTX), and enriches results with **Shodan intelligence** 🔍.  
