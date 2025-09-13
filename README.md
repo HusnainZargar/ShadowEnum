@@ -138,6 +138,12 @@ The HTML report includes:
 - Subdomain → IP mapping
 - IP classification (Public/Private)
 - Optional Shodan enrichment (organization, open ports, CVEs, server info)
+
+> ⚠️ **Note:**  
+> When running ShadowEnum with the `--shodan` flag, the Shodan enrichment details (open ports, CVEs, server information, etc.) **will not be displayed directly in the terminal**.  
+> To view these details, you must save the output using one of the supported formats: `-oH` (HTML), `-oJ` (JSON), or `-oT` (TXT).  
+> Once saved, you can open the HTML report in a browser or view the JSON/TXT files to access the full enrichment data.
+
 ---
 
 ## Example Output
