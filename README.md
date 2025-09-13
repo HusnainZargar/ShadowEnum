@@ -100,7 +100,7 @@ On first run, shadowEnum will create `~/.env` with placeholders. Populate it wit
 ```bash
 VIRUSTOTAL_API_KEY=your_key_here
 SECURITYTRAILS_API_KEY=your_key_here
-OTX_API_KEY=your_key_here
+ALIENVAULT_API_KEY=your_key_here
 SHODAN_API_KEY=your_key_here
 ```
 ---
