@@ -103,6 +103,54 @@ SECURITYTRAILS_API_KEY=your_key_here
 ALIENVAULT_API_KEY=your_key_here
 SHODAN_API_KEY=your_key_here
 ```
+## ⚙️ Usage
+
+Basic brute-force mode:
+```bash
+python3 shadowenum.py example.com -w wordlist.txt
+```
+
+API mode (requires API keys):
+```bash
+python3 shadowenum.py example.com -w wordlist.txt --api
+```
+
+Shodan mode (requires API keys):
+```bash
+python3 shadowenum.py example.com -w wordlist.txt --api --shodan
+```
+
+---
+
+## Example Output
+
+```
+                                                                                                                                                                    
+                                             _________.__                .___            ___________                                                                
+                                            /   _____/|  |__ _____     __| _/______  _  _\_   _____/ ____  __ __  _____                                             
+                                            \_____  \ |  |  \\__  \   / __ |/  _ \ \/ \/ /|    __)_ /    \|  |  \/     \                                            
+                                            /        \|   Y  \/ __ \_/ /_/ (  <_> )     / |        \   |  \  |  /  Y Y  \                                           
+                                           /_______  /|___|  (____  /\____ |\____/ \/\_/ /_______  /___|  /____/|__|_|  /                                           
+                                                   \/      \/     \/      \/                     \/     \/            \/                                            
+                                                                                                                                                                    
+                                                                   >>> By Team Cyber Hunters <<<                                                                    
+                                                       LinkedIn: Black Byt3 | Email: blackbyt3.info@gmail.com                                                       
+                                          Team Members: Mushaib Ahmed | Muhammad Husnain | Muhammad Aeiyan | Fawad Qureshi                  
+
+[+] Starting async subdomain enumeration for example.com
+[i] Filtering by IP is OFF
+[+] Loaded 19967 subdomain candidates
+[LIVE] www.shop.example.com -> 10.10.10.10
+[LIVE] mail.example.com -> 10.10.10.10
+[+] VirusTotal returned 32 subdomains
+[LIVE] admissions.example.com -> 10.10.10.10
+[+] AlienVault returned 70 subdomains
+[LIVE] academic.example.com -> 10.10.10.10
+[+] Found 49 unique live subdomains in 79.82 seconds
+[+] Shodan lookups requested. Querying 9 public IP(s)...
+[+] HTML report saved to output.html
+
+```
 ---
 
 ## Contact
