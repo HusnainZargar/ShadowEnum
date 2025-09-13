@@ -57,7 +57,7 @@ When enabled (`--shodan`) shadowEnum will query Shodan for public IPs and includ
 
 🧰 **CLI Flags & Controls**  
 - `-w, --wordlist` — path to subdomain wordlist  
-- `--api` — enable API-based enumeration  
+- `--api` — enable API-based enumeration (VirusTotal, SecurityTrails, OTX) 
 - `--shodan` — enable Shodan enrichment (requires `SHODAN_API_KEY`)  
 - `-df, --dont-filter-ip` — disable IP-based filtering (show all hostnames)  
 - `-oT, --output-txt` — save TXT report  
