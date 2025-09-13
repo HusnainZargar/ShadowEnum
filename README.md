@@ -119,7 +119,25 @@ Shodan mode (requires API keys):
 ```bash
 python3 shadowenum.py example.com -w wordlist.txt --api --shodan
 ```
+---
+## 🌐 View HTML Report
 
+ShadowEnum can generate an HTML report that you can open in any web browser for easy viewing and analysis.  
+
+### Example
+
+```bash
+# Run ShadowEnum and save results as HTML
+python3 shadowenum.py -w wordlist.txt -oH output.html example.com
+
+# Open the report in Firefox
+firefox output.html
+```
+
+The HTML report includes:
+- Subdomain → IP mapping
+- IP classification (Public/Private)
+- Optional Shodan enrichment (organization, open ports, CVEs, server info)
 ---
 
 ## Example Output
