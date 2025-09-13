@@ -2,7 +2,7 @@
 
 > *Uncover the unseen. Map the shadows.*  
 
-shadowEnum is a **fast & async** subdomain enumeration + recon tool ⚡. It blends **brute-force DNS resolution** with **OSINT APIs** (VirusTotal, SecurityTrails, AlienVault OTX), and enriches results with **Shodan intelligence** 🔍.  
+ShadowEnum is a **fast & async** subdomain enumeration + recon tool ⚡. It blends **brute-force DNS resolution** with **OSINT APIs** (VirusTotal, SecurityTrails, AlienVault OTX), and enriches results with **Shodan intelligence** 🔍.  
 
 💡 Perfect for recon, bug bounty, and security research.  
 ⚠️ **Legal Disclaimer**: Only use shadowEnum on targets you own or have explicit permission to test.  
@@ -40,8 +40,7 @@ Ensures unique subdomain names across both wordlist and API results (prevents du
 
 Each format includes:  
 - Subdomain → IP mapping  
-- IP classification (Public/Private)  
-- Metadata (timestamps, total counts, duration)  
+- IP classification (Public/Private)   
 - Optional **Shodan enrichment** (open ports, CVEs, server info)
 
 🔑 **Environment File Auto-Creation**  
