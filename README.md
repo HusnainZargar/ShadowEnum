@@ -67,12 +67,25 @@ When enabled (`--shodan`) shadowEnum will query Shodan for public IPs and includ
 ---
 
 ## 📦 Installation
+
+You can install and run **ShadowEnum** in two ways:
+
+### 1. Run Directly with Python
 ```bash
 # Clone the repo
-git clone git@github.com:Cybertoonv/ShadowEnum.git
+git clone https://github.com/HusnainZargar/ShadowEnum.git
 cd ShadowEnum
 
-# Install dependencies
+# Run directly
+python3 shadowenum.py
+```
+### 2. Install System-wide (using install.sh)
+```bash
+# Clone the repo
+git clone https://github.com/HusnainZargar/ShadowEnum.git
+cd ShadowEnum
+
+# Make install.sh executable
 sudo chmod +x install.sh
 
 # Run Install.sh
