@@ -89,6 +89,9 @@ sudo chmod +x install.sh
 
 # Run Install.sh
 ./install.sh
+
+# Now you can run ShadowEnum directly from anywhere using the command:
+shadowenum example.com
 ```
 ---
 
