@@ -180,7 +180,7 @@ The HTML report includes:
 
 ## Contact
 
-Maintainer: Muhammad Husnain — husnainzargar@proton.me
+Maintainer: Muhammad Husnain — info@hackwithhusnain.com
 
 ---
 🛡 **Ethical Reminder**  
