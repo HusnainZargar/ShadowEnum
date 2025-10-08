@@ -1,3 +1,10 @@
+# Project: shadowEnum
+# Coded by: Muhammad Husnain Zargar
+# Email: info@hackwithhusnain.com
+# Purpose: Async subdomain enumeration + optional recon (OSINT & Shodan enrichment)
+
+
+
 #!/usr/bin/env python3
 """
 shadowenum.py
