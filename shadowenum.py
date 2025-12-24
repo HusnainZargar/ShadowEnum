@@ -59,14 +59,12 @@ def print_centered(text, color=""):
         print(color + line.center(width) + RESET)
 
 def print_banner():
-    subtitle = ">>> By Team Cyber Hunters <<<"
-    contact = "LinkedIn: Black Byt3 | Email: blackbyt3.info@gmail.com"
-    team = "Team Members: Mushaib Ahmed | Muhammad Husnain | Muhammad Aeiyan | Fawad Qureshi"
+    subtitle = ">>> By Muhammad Husnain Zargar <<<"
+    contact = "LinkedIn: /muhammad-husnain-z995 | Email: info@hackwithhusnain.com"
 # Fixed colors (no randomness)
     print_centered(BANNER_ART, BRIGHT_GREEN)    # Main banner
     print_centered(subtitle, BRIGHT_YELLOW)     # Subtitle
     print_centered(contact, BRIGHT_MAGENTA)     # Contact info
-    print_centered(team, BRIGHT_CYAN)           # Team members
     print()
 print_banner()
 
